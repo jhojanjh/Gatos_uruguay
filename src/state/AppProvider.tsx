@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { notifications } from '@mantine/notifications';
-import type { AppData, MemberId } from '@/types';
+import type { AppData, MemberId, UserAppearance } from '@/types';
 import { storageService } from '@/services/storageService';
 import { photoService } from '@/services/photoService';
 import { createEmptyData } from '@/data/sampleData';
@@ -10,10 +10,30 @@ import { currentMonthKey } from '@/utils/dates';
 import { AppContext } from '@/state/appContext';
 import { supabase } from '@/lib/supabase';
 
+const DEFAULT_APPEARANCE: UserAppearance = { mode: 'light', accentColor: 'terracota' };
+const APPEARANCE_KEY_PREFIX = 'hogar.apariencia.v1.';
+
+function readAppearance(memberId: MemberId): UserAppearance {
+  try {
+    const raw = localStorage.getItem(APPEARANCE_KEY_PREFIX + memberId);
+    if (!raw) return DEFAULT_APPEARANCE;
+    const saved = JSON.parse(raw) as Partial<UserAppearance>;
+    return {
+      mode: saved.mode === 'dark' ? 'dark' : 'light',
+      accentColor: saved.accentColor === 'azul' || saved.accentColor === 'verde' || saved.accentColor === 'violeta'
+        ? saved.accentColor
+        : 'terracota',
+    };
+  } catch {
+    return DEFAULT_APPEARANCE;
+  }
+}
+
 export function AppProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<AppData>(() => createEmptyData());
   const [session, setSession] = useState<Session | null>(null);
   const [currentUser, setCurrentUser] = useState<MemberId | null>(null);
+  const [appearance, setAppearance] = useState<UserAppearance>(DEFAULT_APPEARANCE);
   const [selectedMonth, setSelectedMonth] = useState(currentMonthKey);
   const [authReady, setAuthReady] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
@@ -29,6 +49,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setAuthReady(true);
       if (!nextSession) {
         setCurrentUser(null);
+        setAppearance(DEFAULT_APPEARANCE);
         setIsLoadingHousehold(false);
         setLoadFailed(false);
       }
@@ -71,6 +92,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const saved = await storageService.load();
         if (!active) return;
         setData(saved ?? createEmptyData());
+        setAppearance(readAppearance(memberId));
         setCurrentUser(memberId);
         setIsLoadingHousehold(false);
       } catch {
@@ -98,6 +120,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!currentUser) return;
+    try {
+      localStorage.setItem(APPEARANCE_KEY_PREFIX + currentUser, JSON.stringify(appearance));
+    } catch {
+      // La apariencia sigue aplicada durante esta sesión aunque el navegador no permita guardarla.
+    }
+  }, [appearance, currentUser]);
+
+  useEffect(() => {
+    if (!currentUser) return;
     setData((previous) => applyFixedExpenses(previous, selectedMonth));
   }, [selectedMonth, currentUser]);
 
@@ -114,6 +145,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setAuthError(null);
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
+  }, []);
+
+  const updateAppearance = useCallback((changes: Partial<UserAppearance>) => {
+    setAppearance((previous) => ({ ...previous, ...changes }));
   }, []);
 
   const clearAuthError = useCallback(() => setAuthError(null), []);
@@ -139,6 +174,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         data,
         updateData,
         currentUser,
+        appearance,
+        updateAppearance,
         hasSession: session !== null,
         authReady,
         authError,

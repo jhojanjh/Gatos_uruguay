@@ -29,15 +29,21 @@ La clave `anon`/publishable se incluye en el frontend, por diseño; **nunca** us
 
 ## Datos, privacidad y autenticación
 
-Los datos compartidos se guardan en la fila `hogar` de Supabase. Los usuarios deben iniciar sesión con una cuenta creada desde Supabase Auth; la app no ofrece registro público.
+Los datos del hogar se guardan en la fila `hogar` de Supabase. La app requiere iniciar sesión con una cuenta creada desde Supabase Auth; no ofrece registro público. Las dos cuentas autorizadas se vinculan a `household_members`, y las políticas RLS permiten leer y actualizar el hogar solo a esos usuarios.
 
-La migración `20261101201500_secure_household_data.sql` crea `household_members` y restringe el acceso a los usuarios autenticados que figuran como miembros del hogar. Antes de activar la app protegida:
+Para activar la protección sin perder los datos:
 
-1. Crea las dos cuentas desde Supabase Dashboard → Authentication → Users.
-2. Ejecuta la migración en Supabase SQL Editor. Esta revoca el acceso anónimo a `household_data`.
-3. Consulta los UUID de ambos usuarios en Authentication → Users e insértalos en `household_members`, con `member_id` `jhojan` o `luisa`.
-4. En Authentication → Settings, desactiva el registro público.
-5. Despliega esta versión de la app.
+1. En Supabase Dashboard → Authentication → Settings, desactiva los registros públicos.
+2. Crea las dos cuentas desde Authentication → Users y copia sus UUID.
+3. Ejecuta `supabase/migrations/20261101201500_secure_household_data.sql` en SQL Editor. Esta migración retira el acceso anónimo.
+4. Inmediatamente después, vincula las cuentas con el hogar:
+   ```sql
+   INSERT INTO public.household_members (user_id, household_id, member_id)
+   VALUES
+     ('<UUID_JHOJAN>', 'hogar', 'jhojan'),
+     ('<UUID_LUISA>', 'hogar', 'luisa');
+   ```
+5. Despliega esta versión de la app en Render. Mientras Render publica la versión con inicio de sesión, la versión anterior no podrá acceder a la tabla protegida.
 
 La clave publicable de Supabase puede estar en el frontend. No incluyas nunca la clave `service_role` ni contraseñas en el código o en variables `VITE_*`.
 

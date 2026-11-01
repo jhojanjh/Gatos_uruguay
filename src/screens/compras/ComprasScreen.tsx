@@ -121,7 +121,7 @@ export function ComprasScreen() {
       ) : (
         <Stack gap="md">
           <Text size="sm" c="dimmed">
-            Esta es la lista compartida de productos para reponer. Al registrar una compra con la factura, el inventario se actualiza y el producto vuelve a Tenemos.
+            Esta es la lista compartida de productos para reponer. Al registrar una compra escaneada o manual, el inventario se actualiza y el producto vuelve a Tenemos.
           </Text>
           <Group gap="sm" align="flex-end" wrap="nowrap">
             <TextInput

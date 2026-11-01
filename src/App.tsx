@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { Button, Center, Loader, Stack, Text } from '@mantine/core';
+import { useMemo, useState } from 'react';
+import { Button, Center, Loader, MantineProvider, Stack, Text } from '@mantine/core';
+import { Notifications } from '@mantine/notifications';
 import { AppLayout } from '@/components/AppLayout';
 import { PlaceholderScreen } from '@/components/PlaceholderScreen';
 import { UserSelector } from '@/components/UserSelector';
@@ -11,6 +12,7 @@ import { WeekScreen } from '@/screens/semana/WeekScreen';
 import { SummaryScreen } from '@/screens/resumen/SummaryScreen';
 import { NAV_ITEMS, type ScreenId } from '@/config/navigation';
 import { AppProvider } from '@/state/AppProvider';
+import { themeForAccent } from '@/theme';
 import { useApp } from '@/state/appContext';
 
 function renderScreen(screen: ScreenId) {
@@ -34,7 +36,7 @@ function renderScreen(screen: ScreenId) {
   }
 }
 
-function AppContent() {
+function AppScreen() {
   const { currentUser, hasSession, authReady, authError, loadFailed, isLoadingHousehold, retryLoad } = useApp();
   const [screen, setScreen] = useState<ScreenId>('inicio');
 
@@ -65,6 +67,18 @@ function AppContent() {
     <AppLayout screen={screen} onScreenChange={setScreen}>
       {renderScreen(screen)}
     </AppLayout>
+  );
+}
+
+function AppContent() {
+  const { appearance } = useApp();
+  const userTheme = useMemo(() => themeForAccent(appearance.accentColor), [appearance.accentColor]);
+
+  return (
+    <MantineProvider theme={userTheme} forceColorScheme={appearance.mode}>
+      <Notifications position="top-center" />
+      <AppScreen />
+    </MantineProvider>
   );
 }
 

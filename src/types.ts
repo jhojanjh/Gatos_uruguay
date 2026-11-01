@@ -1,4 +1,11 @@
 export type MemberId = 'jhojan' | 'luisa';
+export type AppearanceMode = 'light' | 'dark';
+export type AccentColor = 'terracota' | 'azul' | 'verde' | 'violeta';
+
+export interface UserAppearance {
+  mode: AppearanceMode;
+  accentColor: AccentColor;
+}
 
 export interface Category {
   id: string;

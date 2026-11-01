@@ -6,6 +6,8 @@ import { HomeScreen } from '@/screens/inicio/HomeScreen';
 import { ExpensesScreen } from '@/screens/gastos/ExpensesScreen';
 import { ComprasScreen } from '@/screens/compras/ComprasScreen';
 import { PreciosScreen } from '@/screens/precios/PreciosScreen';
+import { WeekScreen } from '@/screens/semana/WeekScreen';
+import { SummaryScreen } from '@/screens/resumen/SummaryScreen';
 import { NAV_ITEMS, type ScreenId } from '@/config/navigation';
 import { AppProvider } from '@/state/AppProvider';
 import { useApp } from '@/state/appContext';
@@ -20,6 +22,10 @@ function renderScreen(screen: ScreenId) {
       return <ComprasScreen />;
     case 'precios':
       return <PreciosScreen />;
+    case 'semana':
+      return <WeekScreen />;
+    case 'resumen':
+      return <SummaryScreen />;
     default: {
       const item = NAV_ITEMS.find((navItem) => navItem.id === screen);
       return item ? <PlaceholderScreen title={item.label} icon={item.icon} /> : null;

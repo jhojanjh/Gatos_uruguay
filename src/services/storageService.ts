@@ -1,4 +1,4 @@
-import type { AppData } from '@/types';
+import type { AppData, MemberId } from '@/types';
 import { supabase } from '@/lib/supabase';
 
 const HOUSEHOLD_ID = 'hogar';
@@ -21,6 +21,17 @@ function readLegacyCopy(): AppData | null {
 
 /** Carga y guarda los datos del hogar en Supabase. Los errores se lanzan para que la app los muestre. */
 export const storageService = {
+  async loadMember(userId: string): Promise<MemberId | null> {
+    const { data, error } = await supabase
+      .from('household_members')
+      .select('member_id')
+      .eq('user_id', userId)
+      .eq('household_id', HOUSEHOLD_ID)
+      .maybeSingle();
+    if (error) throw error;
+    return (data?.member_id as MemberId | undefined) ?? null;
+  },
+
   async load(): Promise<AppData | null> {
     const { data, error } = await supabase
       .from('household_data')

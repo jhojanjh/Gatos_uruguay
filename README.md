@@ -29,8 +29,24 @@ La clave `anon`/publishable se incluye en el frontend, por diseño; **nunca** us
 
 ## Datos, privacidad y autenticación
 
-Los datos compartidos se guardan en la tabla Supabase `household_data`. Las fotos de facturas permanecen en IndexedDB de cada navegador y no se sincronizan entre dispositivos.
+Los datos del hogar se guardan en la fila `hogar` de Supabase. La app requiere iniciar sesión con una cuenta creada desde Supabase Auth; no ofrece registro público. Las dos cuentas autorizadas se vinculan a `household_members`, y las políticas RLS permiten leer y actualizar el hogar solo a esos usuarios.
 
-La app aún no tiene inicio de sesión. El selector de Jhojan y Luisa solo cambia el nombre de usuario que muestra la interfaz. La migración actual permite a cualquier visitante anónimo leer y actualizar el registro `hogar`; por tanto, no publiques ni cargues datos financieros reales hasta configurar Supabase Auth y políticas RLS que limiten el acceso a usuarios autorizados.
+Para activar la protección sin perder los datos:
 
-El proyecto gratuito de Supabase puede pausarse después de siete días de baja actividad y permite hasta 500 MB de base de datos. Los límites de Render y Supabase pueden cambiar; consulta sus paneles antes del despliegue.
+1. En Supabase Dashboard → Authentication → Settings, desactiva los registros públicos.
+2. Crea las dos cuentas desde Authentication → Users y copia sus UUID.
+3. Ejecuta `supabase/migrations/20261101201500_secure_household_data.sql` en SQL Editor. Esta migración retira el acceso anónimo.
+4. Inmediatamente después, vincula las cuentas con el hogar:
+   ```sql
+   INSERT INTO public.household_members (user_id, household_id, member_id)
+   VALUES
+     ('<UUID_JHOJAN>', 'hogar', 'jhojan'),
+     ('<UUID_LUISA>', 'hogar', 'luisa');
+   ```
+5. Despliega esta versión de la app en Render. Mientras Render publica la versión con inicio de sesión, la versión anterior no podrá acceder a la tabla protegida.
+
+La clave publicable de Supabase puede estar en el frontend. No incluyas nunca la clave `service_role` ni contraseñas en el código o en variables `VITE_*`.
+
+Las fotos de facturas permanecen en IndexedDB de cada navegador y no se sincronizan entre dispositivos. Los datos presupuestarios sí se comparten entre las dos cuentas autorizadas.
+
+El proyecto gratuito de Supabase puede pausarse después de siete días de baja actividad. Los límites de Render y Supabase pueden cambiar; consulta sus paneles antes del despliegue.

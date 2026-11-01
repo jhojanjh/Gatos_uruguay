@@ -1,38 +1,81 @@
-import { Center, SimpleGrid, Stack, Text, ThemeIcon, Title, UnstyledButton } from '@mantine/core';
+import { useState, type FormEvent } from 'react';
+import { Alert, Button, Center, PasswordInput, Stack, Text, TextInput, ThemeIcon, Title } from '@mantine/core';
 import { Wallet } from 'lucide-react';
-import { MEMBER_LIST } from '@/config/constants';
-import { MemberAvatar } from '@/components/MemberAvatar';
 import { useApp } from '@/state/appContext';
-import classes from './UserSelector.module.css';
 
 export function UserSelector() {
-  const { setCurrentUser } = useApp();
+  const { signIn, authError, clearAuthError } = useApp();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError('');
+    clearAuthError();
+    setSubmitting(true);
+    try {
+      await signIn(email, password);
+    } catch {
+      setError('No pudimos iniciar sesión. Revisa el correo y la contraseña.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   return (
     <Center mih="100dvh" p="lg">
-      <Stack align="center" gap="xl" maw={480} w="100%">
+      <Stack align="center" gap="xl" maw={420} w="100%">
         <Stack align="center" gap="xs">
           <ThemeIcon size={56} radius="xl" variant="light" color="terracota">
             <Wallet size={28} />
           </ThemeIcon>
           <Title order={1} ta="center" fz={28}>
-            ¿Quién está usando la app?
+            Presupuesto del hogar
           </Title>
+          <Text ta="center" c="dimmed">
+            Inicia sesión con una de las dos cuentas autorizadas.
+          </Text>
         </Stack>
 
-        <SimpleGrid cols={2} spacing="md" w="100%">
-          {MEMBER_LIST.map((member) => (
-            <UnstyledButton key={member.id} className={classes.memberCard} onClick={() => setCurrentUser(member.id)}>
-              <MemberAvatar memberId={member.id} size={80} />
-              <Text fw={800} fz="lg">
-                {member.name}
-              </Text>
-            </UnstyledButton>
-          ))}
-        </SimpleGrid>
+        {(error || authError) && (
+          <Alert color="red" w="100%">
+            {error || authError}
+          </Alert>
+        )}
 
-        <Text ta="center" fz="sm">
-          Sin contraseña en esta versión. Los datos se guardan solo en este dispositivo.
+        <form onSubmit={handleSubmit} style={{ width: '100%' }}>
+          <Stack gap="md">
+            <TextInput
+              label="Correo electrónico"
+              type="email"
+              autoComplete="username"
+              value={email}
+              onChange={(event) => {
+                setEmail(event.currentTarget.value);
+                clearAuthError();
+              }}
+              required
+            />
+            <PasswordInput
+              label="Contraseña"
+              autoComplete="current-password"
+              value={password}
+              onChange={(event) => {
+                setPassword(event.currentTarget.value);
+                clearAuthError();
+              }}
+              required
+            />
+            <Button type="submit" color="terracota" loading={submitting} fullWidth>
+              Iniciar sesión
+            </Button>
+          </Stack>
+        </form>
+
+        <Text ta="center" fz="sm" c="dimmed">
+          El acceso se habilita desde las cuentas autorizadas del hogar.
         </Text>
       </Stack>
     </Center>

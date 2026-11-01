@@ -34,13 +34,8 @@ export interface Product {
   name: string;
   /** Unidades que tenemos; 0 significa que es faltante */
   quantity: number;
-}
-
-export interface ShoppingListItem {
-  id: string;
-  name: string;
-  checked: boolean;
-  createdAt: string;
+  /** Se muestra en Faltantes aunque todavía queden unidades en casa */
+  needsPurchase?: boolean;
 }
 
 export interface Purchase {
@@ -65,7 +60,6 @@ export interface AppData {
   fixedExpenses: FixedExpense[];
   products: Product[];
   purchases: Purchase[];
-  shoppingList: ShoppingListItem[];
   /** Saldo disponible al inicio de cada mes, por clave YYYY-MM */
   startingBalances: Record<string, number>;
   /** Pares "idGastoFijo|YYYY-MM" ya generados, para no volver a crearlos si se borran */

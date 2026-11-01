@@ -5,7 +5,12 @@ const HOUSEHOLD_ID = 'hogar';
 const LEGACY_STORAGE_KEY = 'hogar.datos.v1';
 
 function withDefaults(data: AppData): AppData {
-  return { ...data, products: data.products ?? [], purchases: data.purchases ?? [] };
+  return {
+    ...data,
+    products: data.products ?? [],
+    purchases: data.purchases ?? [],
+    shoppingList: data.shoppingList ?? [],
+  };
 }
 
 /** Copia guardada en este navegador antes de usar la base de datos; se usa solo para migrar. */

@@ -40,7 +40,7 @@ export function SettingsModal({ opened, onClose }: SettingsModalProps) {
       <Modal opened={opened} onClose={onClose} title={<Title order={3}>Ajustes</Title>}>
         <Stack gap="lg">
           <Alert variant="light" color="salvia" icon={<Info size={20} />}>
-            Tus datos y fotos quedan solo en este dispositivo. Más adelante podrán sincronizarse entre los dos celulares.
+            Los datos del hogar se sincronizan entre las dos cuentas autorizadas. Las fotos de factura quedan en el dispositivo donde se agregaron.
           </Alert>
 
           <Select
@@ -67,7 +67,7 @@ export function SettingsModal({ opened, onClose }: SettingsModalProps) {
 
           <Stack gap="xs">
             <Text fw={600}>Empezar de cero</Text>
-            <Text size="sm">Borra todos los gastos, fotos, saldos y categorías. No se puede deshacer.</Text>
+            <Text size="sm">Borra los datos compartidos del hogar. Las fotos de factura de este dispositivo también se eliminan. No se puede deshacer.</Text>
             <Button
               variant="outline"
               color="red"
@@ -83,7 +83,7 @@ export function SettingsModal({ opened, onClose }: SettingsModalProps) {
       <ConfirmModal
         opened={confirmReset}
         title="¿Empezar de cero?"
-        message="Se borrarán todos los datos y fotos de este dispositivo."
+        message="Se borrarán los gastos, saldos, listas y categorías de todo el hogar. También se eliminarán las fotos guardadas en este dispositivo."
         confirmLabel={resetting ? 'Borrando...' : 'Sí, borrar todo'}
         onConfirm={handleReset}
         onCancel={() => setConfirmReset(false)}

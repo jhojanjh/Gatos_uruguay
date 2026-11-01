@@ -73,22 +73,26 @@ export function WeekScreen() {
           const category = data.categories.find((item) => item.id === expense.categoryId);
           return (
             <Card key={expense.id} withBorder radius="lg" padding="md">
-              <Group justify="space-between" wrap="nowrap">
+              <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="sm" verticalSpacing="xs">
                 <Group gap="sm" wrap="nowrap" miw={0}>
                   <ColorSwatch color={category?.color ?? 'gray'} size={14} />
-                  <Stack gap={2} miw={0}>
-                    <Text fw={700} truncate>{expense.description || category?.name || 'Gasto'}</Text>
-                    <Text fz="sm">{formatDayLabel(expense.date)} · {category?.name ?? 'Sin categoría'}</Text>
+                  <Stack gap={2} miw={0} style={{ flex: 1 }}>
+                    <Text fw={700} style={{ whiteSpace: 'normal', overflowWrap: 'anywhere' }}>
+                      {expense.description || category?.name || 'Gasto'}
+                    </Text>
+                    <Text fz="sm" style={{ whiteSpace: 'normal', overflowWrap: 'anywhere' }}>
+                      {formatDayLabel(expense.date)} · {category?.name ?? 'Sin categoría'}
+                    </Text>
                     {expense.fixedExpenseId && <Badge size="sm" variant="light" w="fit-content">Gasto fijo</Badge>}
                   </Stack>
                 </Group>
-                <Group gap="xs" wrap="nowrap">
+                <Group gap="xs" justify="space-between" wrap="nowrap">
                   <Text fw={800} style={{ whiteSpace: 'nowrap' }}>{formatMoney(expense.amount, currency)}</Text>
                   <ActionIcon aria-label={`Editar ${expense.description || 'gasto'}`} onClick={() => setEditing(expense)}>
                     <Pencil size={18} />
                   </ActionIcon>
                 </Group>
-              </Group>
+              </SimpleGrid>
             </Card>
           );
         })}

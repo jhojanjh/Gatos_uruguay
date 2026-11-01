@@ -1,10 +1,12 @@
 import { createContext, useContext } from 'react';
-import type { AppData, MemberId } from '@/types';
+import type { AppData, MemberId, UserAppearance } from '@/types';
 
 export interface AppContextValue {
   data: AppData;
   updateData: (updater: (previous: AppData) => AppData) => void;
   currentUser: MemberId | null;
+  appearance: UserAppearance;
+  updateAppearance: (changes: Partial<UserAppearance>) => void;
   hasSession: boolean;
   authReady: boolean;
   authError: string | null;

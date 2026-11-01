@@ -5,6 +5,7 @@ import { Plus, Trash2 } from 'lucide-react';
 import { PhotoPicker } from '@/components/PhotoPicker';
 import { receiptOcrService } from '@/services/receiptOcrService';
 import { useApp } from '@/state/appContext';
+import { CATEGORY_COLORS } from '@/config/constants';
 import { todayKey } from '@/utils/dates';
 import { newId } from '@/utils/ids';
 import { formatMoney } from '@/utils/money';
@@ -115,11 +116,44 @@ function ScanReceiptForm({ onDone }: { onDone: () => void }) {
       quantity: Number(row.quantity),
       price: Number(row.price),
     }));
-    updateData((previous) => applyReceiptToData(previous, { store, date, items }));
+    const receiptTotal = Math.round(items.reduce((sum, item) => sum + item.price, 0) * 100) / 100;
+    const createdAt = new Date().toISOString();
+
+    updateData((previous) => {
+      const next = applyReceiptToData(previous, { store, date, items });
+      const supermarketCategory = next.categories.find(
+        (category) => category.name.trim().toLocaleLowerCase('es') === 'supermercado',
+      ) ?? {
+        id: newId(),
+        name: 'Supermercado',
+        color: CATEGORY_COLORS[0],
+        monthlyLimit: null,
+      };
+
+      return {
+        ...next,
+        categories: next.categories.some((category) => category.id === supermarketCategory.id)
+          ? next.categories
+          : [...next.categories, supermarketCategory],
+        expenses: [
+          ...next.expenses,
+          {
+            id: newId(),
+            amount: receiptTotal,
+            categoryId: supermarketCategory.id,
+            date,
+            description: `Compra en ${store.trim()}`,
+            photoIds: [],
+            fixedExpenseId: null,
+            createdAt,
+          },
+        ],
+      };
+    });
     notifications.show({
       color: 'teal',
-      title: 'Factura guardada',
-      message: `${items.length} artículo${items.length === 1 ? '' : 's'} agregados a lo que tenemos.`,
+      title: 'Compra y gasto guardados',
+      message: `${items.length} artículos y ${formatMoney(receiptTotal, currency)} en Supermercado.`,
     });
     onDone();
   }

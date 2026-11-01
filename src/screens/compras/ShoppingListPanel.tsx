@@ -31,7 +31,7 @@ export function ShoppingListPanel({ items, onAdd, onToggle, onRemove, onClearCom
   return (
     <Stack gap="md">
       <Text c="dimmed" size="sm">
-        La lista se comparte con la otra cuenta del hogar.
+        Se guarda en el hogar compartido. Si la otra persona ya tiene la app abierta, debe actualizar la página para ver los cambios.
       </Text>
 
       <form onSubmit={handleSubmit}>

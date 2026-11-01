@@ -5,6 +5,7 @@ import { Plus, Trash2 } from 'lucide-react';
 import { PhotoPicker } from '@/components/PhotoPicker';
 import { receiptOcrService } from '@/services/receiptOcrService';
 import { useApp } from '@/state/appContext';
+import { CATEGORY_COLORS } from '@/config/constants';
 import { todayKey } from '@/utils/dates';
 import { newId } from '@/utils/ids';
 import { formatMoney } from '@/utils/money';
@@ -57,10 +58,13 @@ function ScanReceiptForm({ onDone }: { onDone: () => void }) {
   const [store, setStore] = useState('');
   const [date, setDate] = useState(todayKey());
   const [attempted, setAttempted] = useState(false);
+  const [paidTotal, setPaidTotal] = useState<number | string>('');
 
   const included = (rows ?? []).filter((row) => row.include);
   const validIncluded = included.filter(isRowValid);
-  const total = validIncluded.reduce((sum, row) => sum + Number(row.price), 0);
+  const itemsTotal = Math.round(validIncluded.reduce((sum, row) => sum + Number(row.price), 0) * 100) / 100;
+  const receiptTotal = paidTotal === '' ? itemsTotal : Number(paidTotal);
+  const receiptTotalError = attempted && !(receiptTotal > 0) ? 'Ingresa el total pagado del ticket' : undefined;
   const storeError = attempted && store.trim() === '' ? 'Escribe en qué tienda compraste' : undefined;
 
   async function handlePhoto(files: File[]) {
@@ -108,18 +112,51 @@ function ScanReceiptForm({ onDone }: { onDone: () => void }) {
 
   function handleSave() {
     setAttempted(true);
-    if (store.trim() === '' || validIncluded.length === 0 || validIncluded.length !== included.length) return;
+    if (store.trim() === '' || !(receiptTotal > 0) || validIncluded.length === 0 || validIncluded.length !== included.length) return;
 
     const items = validIncluded.map((row) => ({
       name: row.name.trim(),
       quantity: Number(row.quantity),
       price: Number(row.price),
     }));
-    updateData((previous) => applyReceiptToData(previous, { store, date, items }));
+    const amountPaid = Math.round(receiptTotal * 100) / 100;
+    const createdAt = new Date().toISOString();
+
+    updateData((previous) => {
+      const next = applyReceiptToData(previous, { store, date, items });
+      const supermarketCategory = next.categories.find(
+        (category) => category.name.trim().toLocaleLowerCase('es') === 'supermercado',
+      ) ?? {
+        id: newId(),
+        name: 'Supermercado',
+        color: CATEGORY_COLORS[0],
+        monthlyLimit: null,
+      };
+
+      return {
+        ...next,
+        categories: next.categories.some((category) => category.id === supermarketCategory.id)
+          ? next.categories
+          : [...next.categories, supermarketCategory],
+        expenses: [
+          ...next.expenses,
+          {
+            id: newId(),
+            amount: amountPaid,
+            categoryId: supermarketCategory.id,
+            date,
+            description: `Compra en ${store.trim()}`,
+            photoIds: [],
+            fixedExpenseId: null,
+            createdAt,
+          },
+        ],
+      };
+    });
     notifications.show({
       color: 'teal',
-      title: 'Factura guardada',
-      message: `${items.length} artículo${items.length === 1 ? '' : 's'} agregados a lo que tenemos.`,
+      title: 'Compra y gasto guardados',
+      message: `${items.length} artículos y ${formatMoney(amountPaid, currency)} en Supermercado.`,
     });
     onDone();
   }
@@ -208,7 +245,20 @@ function ScanReceiptForm({ onDone }: { onDone: () => void }) {
       </Stack>
 
       <Group justify="space-between" align="center" wrap="wrap" gap="sm">
-        <Text fw={800}>Total: {formatMoney(total, currency)}</Text>
+        <Stack gap={2} style={{ minWidth: 'min(100%, 260px)' }}>
+          <Text size="xs" c="dimmed">Suma de artículos: {formatMoney(itemsTotal, currency)}</Text>
+          <NumberInput
+            label="Total pagado según el ticket"
+            value={paidTotal === '' ? itemsTotal : paidTotal}
+            onChange={setPaidTotal}
+            thousandSeparator="."
+            decimalSeparator=","
+            decimalScale={2}
+            min={0}
+            allowNegative={false}
+            error={receiptTotalError}
+          />
+        </Stack>
         <Group gap="sm">
           <Button variant="default" onClick={() => setRows(null)}>
             Otra foto

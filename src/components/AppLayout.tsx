@@ -35,7 +35,7 @@ export function AppLayout({ screen, onScreenChange, children }: AppLayoutProps) 
           <Group gap={4} wrap="nowrap">
             <ActionIcon
               aria-label={isDark ? 'Activar modo claro' : 'Activar modo oscuro'}
-              onClick={() => updateAppearance({ mode: isDark ? 'light' : 'dark' })
+              onClick={() => updateAppearance({ mode: isDark ? 'light' : 'dark' })}
             >
               {isDark ? <Sun size={22} /> : <Moon size={22} />}
             </ActionIcon>

@@ -1,35 +1,36 @@
 # Presupuesto del hogar
 
-Aplicación web (PWA) para que Jhojan y Luisa administren el presupuesto mensual del hogar: saldo, gastos con fotos de factura, gastos fijos, categorías con límite y balance de pareja.
+Aplicación web (PWA) para que Jhojan y Luisa administren el presupuesto mensual del hogar. El frontend React se conecta directamente a Supabase para leer y guardar los datos.
 
-## Cómo ejecutar
+## Ejecutar localmente
 
 ```bash
 npm install
-npm run dev      # desarrollo
-npm run build    # compilación de producción
-npm run preview  # probar la versión compilada
 ```
 
-## Estructura
+Copia `.env.example` a `.env.local` y completa `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` con los valores del proyecto Supabase. Después:
 
-- `src/state/` contexto global de la app (`AppContext.tsx` provee, `appContext.ts` expone el hook `useApp`).
-- `src/services/storageService.ts` datos de la app en localStorage (clave `hogar.datos.v1`).
-- `src/services/photoService.ts` fotos de facturas en IndexedDB (base `hogar-fotos`). Los gastos solo guardan los ids de sus fotos.
-- `src/utils/` lógica pura: presupuesto, gastos fijos, fechas, dinero, compresión de imágenes.
-- `src/screens/` pantallas (Inicio, Gastos). Las demás pestañas son marcadores de posición.
-- `src/components/` piezas compartidas (layout, selector de usuario, ajustes, visor de fotos).
-- `public/` manifest, service worker (`sw.js`) e icono.
+```bash
+npm run dev
+```
 
-## Datos y privacidad
+## Desplegar gratis en Render
 
-Todo se guarda solo en este dispositivo: los datos en localStorage y las fotos en IndexedDB. Si se borra el almacenamiento del navegador, se pierde la información.
+El archivo `render.yaml` configura un sitio estático de Render. Para desplegar:
 
-## Reemplazar el almacenamiento por una API o Supabase
+1. Sube esta rama al repositorio de GitHub.
+2. En Render, crea un **Blueprint** conectado al repositorio y selecciona `render.yaml`.
+3. Cuando Render lo solicite, proporciona `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` del proyecto Supabase.
+4. Render ejecutará `npm ci && npm run build` y publicará `dist/` en su CDN.
 
-Toda la lectura y escritura de datos pasa por `storageService` (datos) y `photoService` (fotos). Para sincronizar a los dos usuarios, reemplaza la implementación de esos dos módulos manteniendo sus funciones; el resto de la app no cambia. Con Supabase, las fotos se pueden guardar en Storage y el gasto guardar sus URLs o ids.
+Los sitios estáticos de Render son gratuitos y no se apagan por inactividad. El proyecto Supabase gratuito tiene límites de uso y puede pausarse después de una semana con poca actividad; puedes reactivarlo desde Supabase. Revisa los límites actuales antes de usarlo como servicio permanente.
 
-## PWA
+La clave `anon`/publishable se incluye en el frontend, por diseño; **nunca** uses `service_role` ni una clave secreta en las variables `VITE_*`.
 
-- Instalable desde el navegador (manifest en `public/manifest.webmanifest`).
-- El service worker (`public/sw.js`) se registra solo en producción y guarda en caché la app para uso sin conexión básico.
+## Datos, privacidad y autenticación
+
+Los datos compartidos se guardan en la tabla Supabase `household_data`. Las fotos de facturas permanecen en IndexedDB de cada navegador y no se sincronizan entre dispositivos.
+
+La app aún no tiene inicio de sesión. El selector de Jhojan y Luisa solo cambia el nombre de usuario que muestra la interfaz. La migración actual permite a cualquier visitante anónimo leer y actualizar el registro `hogar`; por tanto, no publiques ni cargues datos financieros reales hasta configurar Supabase Auth y políticas RLS que limiten el acceso a usuarios autorizados.
+
+El proyecto gratuito de Supabase puede pausarse después de siete días de baja actividad y permite hasta 500 MB de base de datos. Los límites de Render y Supabase pueden cambiar; consulta sus paneles antes del despliegue.

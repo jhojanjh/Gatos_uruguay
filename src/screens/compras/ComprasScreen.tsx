@@ -9,6 +9,7 @@ import { newId } from '@/utils/ids';
 import { normalizeProductName } from '@/utils/products';
 import { ProductList } from './ProductList';
 import { ScanReceiptModal } from './ScanReceiptModal';
+import { ManualPurchaseModal } from './ManualPurchaseModal';
 
 type ComprasView = 'tenemos' | 'faltantes';
 
@@ -20,6 +21,7 @@ export function ComprasScreen() {
   const { data, updateData } = useApp();
   const [view, setView] = useState<ComprasView>('tenemos');
   const [scanOpen, setScanOpen] = useState(false);
+  const [manualOpen, setManualOpen] = useState(false);
   const [newName, setNewName] = useState('');
   const [deleting, setDeleting] = useState<Product | null>(null);
 
@@ -68,9 +70,19 @@ export function ComprasScreen() {
           <Title order={2}>Compras</Title>
           <Text>Lo que tenemos en casa y lo que falta por comprar.</Text>
         </Stack>
-        <Button leftSection={<ScanLine size={20} />} color="terracota" onClick={() => setScanOpen(true)}>
-          Escanear factura
-        </Button>
+        <Group gap="xs" wrap="wrap">
+          <Button
+            variant="light"
+            color="terracota"
+            leftSection={<Plus size={20} />}
+            onClick={() => setManualOpen(true)}
+          >
+            Agregar compra manual
+          </Button>
+          <Button leftSection={<ScanLine size={20} />} color="terracota" onClick={() => setScanOpen(true)}>
+            Escanear factura
+          </Button>
+        </Group>
       </Group>
 
       <SegmentedControl
@@ -86,7 +98,7 @@ export function ComprasScreen() {
       {view === 'tenemos' ? (
         <ProductList
           products={inStock}
-          emptyText="Todavía no tienes productos registrados. Escanea una factura para llenar la lista."
+          emptyText="Todavía no tienes productos. Agrega una compra manualmente o escanea una factura."
           onQuantityChange={setQuantity}
           onDelete={setDeleting}
         />
@@ -117,6 +129,7 @@ export function ComprasScreen() {
       )}
 
       <ScanReceiptModal opened={scanOpen} onClose={() => setScanOpen(false)} />
+      <ManualPurchaseModal opened={manualOpen} onClose={() => setManualOpen(false)} />
 
       <ConfirmModal
         opened={deleting !== null}

@@ -41,7 +41,7 @@ const themeConfig = {
   components: {
     Button: { defaultProps: { size: 'lg', radius: 'xl' } },
     ActionIcon: { defaultProps: { size: 'xl', variant: 'subtle', radius: 'xl' } },
-    Modal: { defaultProps: { radius: 'xl', centered: true, overlayProps: { backgroundOpacity: 0.4, blur: 3 } },
+    Modal: { defaultProps: { radius: 'xl', centered: true, overlayProps: { backgroundOpacity: 0.4, blur: 3 } } },
   },
 };
 

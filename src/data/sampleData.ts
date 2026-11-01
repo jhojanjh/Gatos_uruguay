@@ -31,6 +31,7 @@ export function createEmptyData(): AppData {
     fixedExpenses: [],
     products: [],
     purchases: [],
+    shoppingList: [],
     startingBalances: {},
     generatedFixedKeys: [],
   };

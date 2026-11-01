@@ -1,16 +1,36 @@
-import type { AppData, MemberId } from '@/types';
+import type { AppData, MemberId, Product } from '@/types';
 import { supabase } from '@/lib/supabase';
+import { newId } from '@/utils/ids';
+import { normalizeProductName } from '@/utils/products';
 
 const HOUSEHOLD_ID = 'hogar';
 const LEGACY_STORAGE_KEY = 'hogar.datos.v1';
 
 function withDefaults(data: AppData): AppData {
-  return {
-    ...data,
-    products: data.products ?? [],
-    purchases: data.purchases ?? [],
-    shoppingList: data.shoppingList ?? [],
+  const legacyData = data as AppData & {
+    shoppingList?: { name?: string; checked?: boolean }[];
   };
+  const products: Product[] = [...(data.products ?? [])];
+
+  for (const item of Array.isArray(legacyData.shoppingList) ? legacyData.shoppingList : []) {
+    const name = item.name?.trim();
+    if (!name || item.checked) continue;
+    const key = normalizeProductName(name);
+    const index = products.findIndex((product) => normalizeProductName(product.name) === key);
+    if (index >= 0) {
+      products[index] = { ...products[index], needsPurchase: true };
+    } else {
+      products.push({ id: newId(), name, quantity: 0, needsPurchase: true });
+    }
+  }
+
+  const normalized = {
+    ...data,
+    products,
+    purchases: data.purchases ?? [],
+  } as AppData & { shoppingList?: unknown };
+  delete normalized.shoppingList;
+  return normalized;
 }
 
 /** Copia guardada en este navegador antes de usar la base de datos; se usa solo para migrar. */

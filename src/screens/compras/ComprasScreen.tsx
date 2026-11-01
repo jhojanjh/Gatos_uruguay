@@ -4,15 +4,14 @@ import { notifications } from '@mantine/notifications';
 import { Plus, ScanLine } from 'lucide-react';
 import { ConfirmModal } from '@/components/ConfirmModal';
 import { useApp } from '@/state/appContext';
-import type { Product, ShoppingListItem } from '@/types';
+import type { Product } from '@/types';
 import { newId } from '@/utils/ids';
 import { normalizeProductName } from '@/utils/products';
 import { ProductList } from './ProductList';
 import { ScanReceiptModal } from './ScanReceiptModal';
 import { ManualPurchaseModal } from './ManualPurchaseModal';
-import { ShoppingListPanel } from './ShoppingListPanel';
 
-type ComprasView = 'tenemos' | 'faltantes' | 'lista';
+type ComprasView = 'tenemos' | 'faltantes';
 
 function byName(a: Product, b: Product): number {
   return a.name.localeCompare(b.name, 'es');
@@ -26,60 +25,18 @@ export function ComprasScreen() {
   const [newName, setNewName] = useState('');
   const [deleting, setDeleting] = useState<Product | null>(null);
 
-  const inStock = data.products.filter((product) => product.quantity > 0).sort(byName);
-  const missing = data.products.filter((product) => product.quantity <= 0).sort(byName);
-  const shoppingList = data.shoppingList ?? [];
-  const pendingShoppingCount = shoppingList.filter((item) => !item.checked).length;
+  const inStock = data.products.filter((product) => product.quantity > 0 && !product.needsPurchase).sort(byName);
+  const missing = data.products.filter((product) => product.quantity <= 0 || product.needsPurchase).sort(byName);
 
   function setQuantity(product: Product, quantity: number) {
+    const nextQuantity = Math.max(0, quantity);
     updateData((previous) => ({
       ...previous,
       products: previous.products.map((item) =>
-        item.id === product.id ? { ...item, quantity: Math.max(0, quantity) } : item,
+        item.id === product.id
+          ? { ...item, quantity: nextQuantity, needsPurchase: nextQuantity === 0 ? true : false }
+          : item,
       ),
-    }));
-  }
-
-  function addShoppingItem(name: string) {
-    const cleanName = name.trim();
-    if (!cleanName) return;
-    const key = normalizeProductName(cleanName);
-    const existing = shoppingList.find((item) => normalizeProductName(item.name) === key);
-
-    if (existing && !existing.checked) {
-      notifications.show({ color: 'blue', title: 'Ya está en la lista', message: existing.name });
-      return;
-    }
-
-    updateData((previous) => ({
-      ...previous,
-      shoppingList: existing
-        ? (previous.shoppingList ?? []).map((item) => item.id === existing.id ? { ...item, checked: false } : item)
-        : [...(previous.shoppingList ?? []), { id: newId(), name: cleanName, checked: false, createdAt: new Date().toISOString() }],
-    }));
-    notifications.show({ color: 'teal', title: 'Agregado a la lista', message: cleanName });
-  }
-
-  function toggleShoppingItem(item: ShoppingListItem) {
-    updateData((previous) => ({
-      ...previous,
-      shoppingList: (previous.shoppingList ?? []).map((current) =>
-        current.id === item.id ? { ...current, checked: !current.checked } : current,
-      ),
-    }));
-  }
-
-  function removeShoppingItem(item: ShoppingListItem) {
-    updateData((previous) => ({
-      ...previous,
-      shoppingList: (previous.shoppingList ?? []).filter((current) => current.id !== item.id),
-    }));
-  }
-
-  function clearCompletedShoppingItems() {
-    updateData((previous) => ({
-      ...previous,
-      shoppingList: (previous.shoppingList ?? []).filter((item) => !item.checked),
     }));
   }
 
@@ -91,11 +48,24 @@ export function ComprasScreen() {
     updateData((previous) => ({
       ...previous,
       products: existing
-        ? previous.products.map((product) => (product.id === existing.id ? { ...product, quantity: 0 } : product))
-        : [...previous.products, { id: newId(), name, quantity: 0 }],
+        ? previous.products.map((product) =>
+            product.id === existing.id ? { ...product, needsPurchase: true } : product,
+          )
+        : [...previous.products, { id: newId(), name, quantity: 0, needsPurchase: true }],
     }));
     setNewName('');
     notifications.show({ color: 'teal', title: 'Agregado a faltantes', message: name });
+  }
+
+  function markPurchased(product: Product) {
+    setQuantity(product, product.quantity + 1);
+    notifications.show({
+      color: 'teal',
+      title: 'Producto actualizado',
+      message: product.quantity > 0
+        ? 'Se agregó una unidad al inventario. Para registrar el gasto, ingresa o escanea la compra.'
+        : 'Ahora aparece en Tenemos. Para registrar el gasto, ingresa o escanea la compra.',
+    });
   }
 
   function confirmDelete() {
@@ -114,7 +84,7 @@ export function ComprasScreen() {
       <Group justify="space-between" align="flex-start" wrap="wrap" gap="sm">
         <Stack gap={4}>
           <Title order={2}>Compras</Title>
-          <Text>Lo que tenemos en casa, lo que falta y lo que tenemos que comprar.</Text>
+          <Text>Tu inventario y los productos que necesitan reponer.</Text>
         </Stack>
         <Group gap="xs" wrap="wrap">
           <Button
@@ -138,7 +108,6 @@ export function ComprasScreen() {
         data={[
           { value: 'tenemos', label: 'Tenemos (' + inStock.length + ')' },
           { value: 'faltantes', label: 'Faltantes (' + missing.length + ')' },
-          { value: 'lista', label: 'Lista (' + pendingShoppingCount + ')' },
         ]}
       />
 
@@ -149,8 +118,11 @@ export function ComprasScreen() {
           onQuantityChange={setQuantity}
           onDelete={setDeleting}
         />
-      ) : view === 'faltantes' ? (
+      ) : (
         <Stack gap="md">
+          <Text size="sm" c="dimmed">
+            Esta es la lista compartida de productos para reponer. Al registrar una compra con la factura, el inventario se actualiza y el producto vuelve a Tenemos.
+          </Text>
           <Group gap="sm" align="flex-end" wrap="nowrap">
             <TextInput
               style={{ flex: 1 }}
@@ -171,17 +143,9 @@ export function ComprasScreen() {
             emptyText="No hay faltantes. Cuando algo se acabe, aparecerá aquí."
             onQuantityChange={setQuantity}
             onDelete={setDeleting}
-            onAddToShoppingList={(product) => addShoppingItem(product.name)}
+            onMarkPurchased={markPurchased}
           />
         </Stack>
-      ) : (
-        <ShoppingListPanel
-          items={shoppingList}
-          onAdd={addShoppingItem}
-          onToggle={toggleShoppingItem}
-          onRemove={removeShoppingItem}
-          onClearCompleted={clearCompletedShoppingItems}
-        />
       )}
 
       <ScanReceiptModal opened={scanOpen} onClose={() => setScanOpen(false)} />

@@ -47,7 +47,7 @@ export function applyReceiptToData(
       index = products.length - 1;
     }
     const product = products[index];
-    products[index] = { ...product, quantity: product.quantity + item.quantity };
+    products[index] = { ...product, quantity: product.quantity + item.quantity, needsPurchase: false };
     purchases.push({
       id: newId(),
       productId: product.id,

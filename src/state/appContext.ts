@@ -5,7 +5,15 @@ export interface AppContextValue {
   data: AppData;
   updateData: (updater: (previous: AppData) => AppData) => void;
   currentUser: MemberId | null;
-  setCurrentUser: (user: MemberId | null) => void;
+  hasSession: boolean;
+  authReady: boolean;
+  authError: string | null;
+  loadFailed: boolean;
+  isLoadingHousehold: boolean;
+  signIn: (email: string, password: string) => Promise<void>;
+  signOut: () => Promise<void>;
+  clearAuthError: () => void;
+  retryLoad: () => void;
   selectedMonth: string;
   setSelectedMonth: (monthKey: string) => void;
   resetData: () => Promise<void>;

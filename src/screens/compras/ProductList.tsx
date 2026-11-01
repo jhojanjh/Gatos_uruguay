@@ -1,5 +1,5 @@
-import { ActionIcon, Card, Group, Stack, Text } from '@mantine/core';
-import { ListPlus, Minus, Plus, Trash2 } from 'lucide-react';
+import { ActionIcon, Button, Card, Group, Stack, Text } from '@mantine/core';
+import { Check, Minus, Plus, Trash2 } from 'lucide-react';
 import type { Product } from '@/types';
 
 interface ProductListProps {
@@ -7,10 +7,10 @@ interface ProductListProps {
   emptyText: string;
   onQuantityChange: (product: Product, quantity: number) => void;
   onDelete: (product: Product) => void;
-  onAddToShoppingList?: (product: Product) => void;
+  onMarkPurchased?: (product: Product) => void;
 }
 
-export function ProductList({ products, emptyText, onQuantityChange, onDelete, onAddToShoppingList }: ProductListProps) {
+export function ProductList({ products, emptyText, onQuantityChange, onDelete, onMarkPurchased }: ProductListProps) {
   if (products.length === 0) {
     return (
       <Card withBorder radius="xl" padding="xl">
@@ -63,17 +63,16 @@ export function ProductList({ products, emptyText, onQuantityChange, onDelete, o
               </Group>
 
               <Group gap={4} wrap="nowrap">
-                {onAddToShoppingList && (
-                  <ActionIcon
-                    size="lg"
+                {onMarkPurchased && (
+                  <Button
+                    size="xs"
                     variant="light"
-                    color="terracota"
-                    aria-label={'Agregar ' + product.name + ' a la lista de compras'}
-                    title="Agregar a la lista"
-                    onClick={() => onAddToShoppingList(product)}
+                    color="teal"
+                    leftSection={<Check size={16} />}
+                    onClick={() => onMarkPurchased(product)}
                   >
-                    <ListPlus size={18} />
-                  </ActionIcon>
+                    Comprado
+                  </Button>
                 )}
                 <ActionIcon
                   size="lg"

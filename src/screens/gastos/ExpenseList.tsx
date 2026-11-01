@@ -1,4 +1,4 @@
-import { ActionIcon, Badge, Button, Card, ColorSwatch, Group, Stack, Text } from '@mantine/core';
+import { ActionIcon, Badge, Button, Card, ColorSwatch, Group, SimpleGrid, Stack, Text } from '@mantine/core';
 import { Eye, ImagePlus, Pencil, Trash2 } from 'lucide-react';
 import type { Category, Expense } from '@/types';
 import { formatDayLabel } from '@/utils/dates';
@@ -22,14 +22,14 @@ export function ExpenseList({ expenses, categories, currency, onEdit, onDelete, 
         return (
           <Card key={expense.id} withBorder radius="lg" padding="md">
             <Stack gap="sm">
-              <Group justify="space-between" wrap="nowrap" align="flex-start" gap="sm">
+              <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="sm" verticalSpacing="xs">
                 <Group gap="sm" wrap="nowrap" miw={0}>
                   <ColorSwatch color={category?.color ?? 'gray'} size={14} mt={6} withShadow={false} />
-                  <Stack gap={2} miw={0}>
-                    <Text fw={800} truncate>
+                  <Stack gap={2} miw={0} style={{ flex: 1 }}>
+                    <Text fw={800} style={{ whiteSpace: 'normal', overflowWrap: 'anywhere' }}>
                       {expense.description || category?.name || 'Gasto'}
                     </Text>
-                    <Text fz="sm">
+                    <Text fz="sm" style={{ whiteSpace: 'normal', overflowWrap: 'anywhere' }}>
                       {formatDayLabel(expense.date)} · {category?.name ?? 'Sin categoría'}
                     </Text>
                     {expense.fixedExpenseId && (
@@ -39,12 +39,14 @@ export function ExpenseList({ expenses, categories, currency, onEdit, onDelete, 
                     )}
                   </Stack>
                 </Group>
-                <Text fw={800} fz="lg" style={{ whiteSpace: 'nowrap' }}>
-                  {formatMoney(expense.amount, currency)}
-                </Text>
-              </Group>
+                <Group justify="space-between" wrap="nowrap">
+                  <Text fw={800} fz="lg" style={{ whiteSpace: 'nowrap' }}>
+                    {formatMoney(expense.amount, currency)}
+                  </Text>
+                </Group>
+              </SimpleGrid>
 
-              <Group justify="space-between" gap="xs">
+              <Group justify="space-between" gap="xs" wrap="wrap">
                 {photoCount > 0 ? (
                   <Button
                     variant="light"

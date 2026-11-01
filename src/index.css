@@ -1,0 +1,28 @@
+html[data-mantine-color-scheme='light'] body {
+  background: #fbf7f2;
+}
+
+html[data-mantine-color-scheme='dark'] body {
+  background: #1c1917;
+}
+
+body {
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 3px solid var(--mantine-primary-color-filled);
+  outline-offset: 2px;
+}
+
+.mantine-Button-root,
+.mantine-ActionIcon-root,
+.mantine-Input-input,
+.mantine-SegmentedControl-control {
+  min-height: 44px;
+}
+
+.mantine-Input-input {
+  font-size: 16px;
+}

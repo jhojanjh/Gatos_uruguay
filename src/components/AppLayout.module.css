@@ -1,0 +1,119 @@
+.root {
+  min-height: 100dvh;
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 90;
+  background: var(--mantine-color-body);
+  border-bottom: 1px solid var(--mantine-color-default-border);
+}
+
+.headerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 8px 16px 0;
+}
+
+.monthRow {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 4px 16px 8px;
+}
+
+.userButton {
+  border-radius: 999px;
+  min-width: 44px;
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+}
+
+.nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 90;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  background: var(--mantine-color-body);
+  border-top: 1px solid var(--mantine-color-default-border);
+  padding: 4px 4px calc(4px + env(safe-area-inset-bottom));
+}
+
+.navItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 52px;
+  border: none;
+  border-radius: 14px;
+  background: transparent;
+  color: var(--mantine-color-text);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.navItem:hover {
+  background: var(--mantine-color-default-hover);
+}
+
+.navItemActive,
+.navItemActive:hover {
+  background: var(--mantine-primary-color-light);
+  color: var(--mantine-primary-color-light-color);
+}
+
+.main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 16px 16px 104px;
+}
+
+@media (min-width: 768px) {
+  .headerRow {
+    padding-top: 12px;
+  }
+
+  .nav {
+    position: static;
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    max-width: 960px;
+    margin: 0 auto;
+    border-top: none;
+    background: transparent;
+    padding: 8px 16px;
+  }
+
+  .navItem {
+    flex-direction: row;
+    gap: 8px;
+    min-width: 128px;
+    min-height: 44px;
+    font-size: 15px;
+    flex: 0 1 auto;
+  }
+
+  .main {
+    padding-bottom: 48px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .navItem {
+    transition: none;
+  }
+}

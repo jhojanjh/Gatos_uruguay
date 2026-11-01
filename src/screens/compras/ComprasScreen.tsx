@@ -4,14 +4,15 @@ import { notifications } from '@mantine/notifications';
 import { Plus, ScanLine } from 'lucide-react';
 import { ConfirmModal } from '@/components/ConfirmModal';
 import { useApp } from '@/state/appContext';
-import type { Product } from '@/types';
+import type { Product, ShoppingListItem } from '@/types';
 import { newId } from '@/utils/ids';
 import { normalizeProductName } from '@/utils/products';
 import { ProductList } from './ProductList';
 import { ScanReceiptModal } from './ScanReceiptModal';
 import { ManualPurchaseModal } from './ManualPurchaseModal';
+import { ShoppingListPanel } from './ShoppingListPanel';
 
-type ComprasView = 'tenemos' | 'faltantes';
+type ComprasView = 'tenemos' | 'faltantes' | 'lista';
 
 function byName(a: Product, b: Product): number {
   return a.name.localeCompare(b.name, 'es');
@@ -27,6 +28,8 @@ export function ComprasScreen() {
 
   const inStock = data.products.filter((product) => product.quantity > 0).sort(byName);
   const missing = data.products.filter((product) => product.quantity <= 0).sort(byName);
+  const shoppingList = data.shoppingList ?? [];
+  const pendingShoppingCount = shoppingList.filter((item) => !item.checked).length;
 
   function setQuantity(product: Product, quantity: number) {
     updateData((previous) => ({
@@ -34,6 +37,49 @@ export function ComprasScreen() {
       products: previous.products.map((item) =>
         item.id === product.id ? { ...item, quantity: Math.max(0, quantity) } : item,
       ),
+    }));
+  }
+
+  function addShoppingItem(name: string) {
+    const cleanName = name.trim();
+    if (!cleanName) return;
+    const key = normalizeProductName(cleanName);
+    const existing = shoppingList.find((item) => normalizeProductName(item.name) === key);
+
+    if (existing && !existing.checked) {
+      notifications.show({ color: 'blue', title: 'Ya está en la lista', message: existing.name });
+      return;
+    }
+
+    updateData((previous) => ({
+      ...previous,
+      shoppingList: existing
+        ? (previous.shoppingList ?? []).map((item) => item.id === existing.id ? { ...item, checked: false } : item)
+        : [...(previous.shoppingList ?? []), { id: newId(), name: cleanName, checked: false, createdAt: new Date().toISOString() }],
+    }));
+    notifications.show({ color: 'teal', title: 'Agregado a la lista', message: cleanName });
+  }
+
+  function toggleShoppingItem(item: ShoppingListItem) {
+    updateData((previous) => ({
+      ...previous,
+      shoppingList: (previous.shoppingList ?? []).map((current) =>
+        current.id === item.id ? { ...current, checked: !current.checked } : current,
+      ),
+    }));
+  }
+
+  function removeShoppingItem(item: ShoppingListItem) {
+    updateData((previous) => ({
+      ...previous,
+      shoppingList: (previous.shoppingList ?? []).filter((current) => current.id !== item.id),
+    }));
+  }
+
+  function clearCompletedShoppingItems() {
+    updateData((previous) => ({
+      ...previous,
+      shoppingList: (previous.shoppingList ?? []).filter((item) => !item.checked),
     }));
   }
 
@@ -68,7 +114,7 @@ export function ComprasScreen() {
       <Group justify="space-between" align="flex-start" wrap="wrap" gap="sm">
         <Stack gap={4}>
           <Title order={2}>Compras</Title>
-          <Text>Lo que tenemos en casa y lo que falta por comprar.</Text>
+          <Text>Lo que tenemos en casa, lo que falta y lo que tenemos que comprar.</Text>
         </Stack>
         <Group gap="xs" wrap="wrap">
           <Button
@@ -90,8 +136,9 @@ export function ComprasScreen() {
         value={view}
         onChange={(value) => setView(value as ComprasView)}
         data={[
-          { value: 'tenemos', label: `Tenemos (${inStock.length})` },
-          { value: 'faltantes', label: `Faltantes (${missing.length})` },
+          { value: 'tenemos', label: 'Tenemos (' + inStock.length + ')' },
+          { value: 'faltantes', label: 'Faltantes (' + missing.length + ')' },
+          { value: 'lista', label: 'Lista (' + pendingShoppingCount + ')' },
         ]}
       />
 
@@ -102,7 +149,7 @@ export function ComprasScreen() {
           onQuantityChange={setQuantity}
           onDelete={setDeleting}
         />
-      ) : (
+      ) : view === 'faltantes' ? (
         <Stack gap="md">
           <Group gap="sm" align="flex-end" wrap="nowrap">
             <TextInput
@@ -124,8 +171,17 @@ export function ComprasScreen() {
             emptyText="No hay faltantes. Cuando algo se acabe, aparecerá aquí."
             onQuantityChange={setQuantity}
             onDelete={setDeleting}
+            onAddToShoppingList={(product) => addShoppingItem(product.name)}
           />
         </Stack>
+      ) : (
+        <ShoppingListPanel
+          items={shoppingList}
+          onAdd={addShoppingItem}
+          onToggle={toggleShoppingItem}
+          onRemove={removeShoppingItem}
+          onClearCompleted={clearCompletedShoppingItems}
+        />
       )}
 
       <ScanReceiptModal opened={scanOpen} onClose={() => setScanOpen(false)} />

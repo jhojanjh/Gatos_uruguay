@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ActionIcon, Button, Card, Checkbox, Group, Modal, NumberInput, Stack, Text, TextInput, Title, SimpleGrid } from '@mantine/core';
+import { ActionIcon, Badge, Button, Card, Checkbox, Group, Modal, NumberInput, Stack, Text, TextInput, Title, SimpleGrid } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { Plus, Trash2 } from 'lucide-react';
 import { PhotoPicker } from '@/components/PhotoPicker';
@@ -9,7 +9,7 @@ import { todayKey } from '@/utils/dates';
 import { newId } from '@/utils/ids';
 import { formatMoney } from '@/utils/money';
 import { applyReceiptToData } from '@/utils/products';
-import { parseReceiptText, type ReceiptLine } from '@/utils/receiptParser';
+import { parseReceiptLines, parseReceiptText, type ReceiptLine } from '@/utils/receiptParser';
 
 interface ScanReceiptModalProps {
   opened: boolean;
@@ -30,6 +30,7 @@ interface ReviewRow {
   name: string;
   quantity: number | string;
   price: number | string;
+  confidence?: number;
 }
 
 function toRows(lines: ReceiptLine[]): ReviewRow[] {
@@ -39,6 +40,7 @@ function toRows(lines: ReceiptLine[]): ReviewRow[] {
     name: line.name,
     quantity: line.quantity,
     price: line.price,
+    confidence: line.confidence,
   }));
 }
 
@@ -66,7 +68,9 @@ function ScanReceiptForm({ onDone }: { onDone: () => void }) {
     if (!photo) return;
     setReading(true);
     try {
-      const lines = parseReceiptText(await receiptOcrService.readText(photo));
+      const receipt = await receiptOcrService.readReceipt(photo);
+      const positionedLines = parseReceiptLines(receipt.lines, receipt.width);
+      const lines = positionedLines.length > 0 ? positionedLines : parseReceiptText(receipt.text);
       if (lines.length === 0) {
         notifications.show({
           color: 'yellow',
@@ -124,7 +128,7 @@ function ScanReceiptForm({ onDone }: { onDone: () => void }) {
     return (
       <Stack gap="md" align="center" py="md">
         <Text ta="center">
-          Saca una foto clara de la factura. Los artículos se leen en este dispositivo y puedes revisarlos antes de guardar.
+          Recorta la foto para que se vea toda la factura, incluido el total, y quede poco fondo alrededor. Los artículos se leen en este dispositivo y puedes revisarlos antes de guardar.
         </Text>
         <PhotoPicker remaining={1} busy={reading} onFiles={handlePhoto} />
       </Stack>
@@ -145,7 +149,10 @@ function ScanReceiptForm({ onDone }: { onDone: () => void }) {
       </SimpleGrid>
 
       <Stack gap="sm">
-        <Text fw={600}>Artículos ({included.length})</Text>
+        <Group justify="space-between" align="center" wrap="wrap" gap="xs">
+          <Text fw={600}>Artículos ({included.length})</Text>
+          <Text fz="sm" c="dimmed">Revisa cantidades y precios antes de guardar.</Text>
+        </Group>
         {rows.length === 0 && <Text fz="sm">Escribe los artículos de la factura con el botón de abajo.</Text>}
         {rows.map((row) => (
           <Card key={row.key} withBorder radius="lg" padding="sm">
@@ -157,6 +164,9 @@ function ScanReceiptForm({ onDone }: { onDone: () => void }) {
                 onChange={(event) => updateRow(row.key, { include: event.currentTarget.checked })}
               />
               <Stack gap="xs" style={{ flex: 1, minWidth: 0 }}>
+                {row.confidence !== undefined && row.confidence < 65 && (
+                  <Badge color="yellow" variant="light" w="fit-content">Revisar lectura</Badge>
+                )}
                 <TextInput
                   placeholder="Nombre del artículo"
                   value={row.name}
@@ -215,3 +225,4 @@ function ScanReceiptForm({ onDone }: { onDone: () => void }) {
     </Stack>
   );
 }
+

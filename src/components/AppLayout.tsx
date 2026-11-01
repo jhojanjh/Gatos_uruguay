@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { Moon, Settings, Sun, Wallet } from 'lucide-react';
 import { ActionIcon, Group, Text, ThemeIcon, UnstyledButton, useComputedColorScheme, useMantineColorScheme } from '@mantine/core';
 import { MemberAvatar } from '@/components/MemberAvatar';
+import { notifications } from '@mantine/notifications';
 import { MonthSwitcher } from '@/components/MonthSwitcher';
 import { SettingsModal } from '@/components/SettingsModal';
 import { NAV_ITEMS, type ScreenId } from '@/config/navigation';
@@ -15,7 +16,7 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ screen, onScreenChange, children }: AppLayoutProps) {
-  const { currentUser, setCurrentUser } = useApp();
+  const { currentUser, signOut } = useApp();
   const { setColorScheme } = useMantineColorScheme();
   const computedScheme = useComputedColorScheme('light');
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -45,9 +46,17 @@ export function AppLayout({ screen, onScreenChange, children }: AppLayoutProps) 
             </ActionIcon>
             {currentUser && (
               <UnstyledButton
-                aria-label="Cambiar de usuario"
-                title="Cambiar de usuario"
-                onClick={() => setCurrentUser(null)}
+                aria-label="Cerrar sesión"
+                title="Cerrar sesión"
+                onClick={() => {
+                  void signOut().catch(() =>
+                    notifications.show({
+                      color: 'red',
+                      title: 'No se pudo cerrar sesión',
+                      message: 'Intenta nuevamente.',
+                    }),
+                  );
+                }}
                 className={classes.userButton}
               >
                 <MemberAvatar memberId={currentUser} size={40} />

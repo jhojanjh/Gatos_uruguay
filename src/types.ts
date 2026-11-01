@@ -36,6 +36,13 @@ export interface Product {
   quantity: number;
 }
 
+export interface ShoppingListItem {
+  id: string;
+  name: string;
+  checked: boolean;
+  createdAt: string;
+}
+
 export interface Purchase {
   id: string;
   productId: string;
@@ -58,6 +65,7 @@ export interface AppData {
   fixedExpenses: FixedExpense[];
   products: Product[];
   purchases: Purchase[];
+  shoppingList: ShoppingListItem[];
   /** Saldo disponible al inicio de cada mes, por clave YYYY-MM */
   startingBalances: Record<string, number>;
   /** Pares "idGastoFijo|YYYY-MM" ya generados, para no volver a crearlos si se borran */

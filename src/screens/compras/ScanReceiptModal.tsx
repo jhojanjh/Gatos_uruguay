@@ -58,10 +58,13 @@ function ScanReceiptForm({ onDone }: { onDone: () => void }) {
   const [store, setStore] = useState('');
   const [date, setDate] = useState(todayKey());
   const [attempted, setAttempted] = useState(false);
+  const [paidTotal, setPaidTotal] = useState<number | string>('');
 
   const included = (rows ?? []).filter((row) => row.include);
   const validIncluded = included.filter(isRowValid);
-  const total = validIncluded.reduce((sum, row) => sum + Number(row.price), 0);
+  const itemsTotal = Math.round(validIncluded.reduce((sum, row) => sum + Number(row.price), 0) * 100) / 100;
+  const receiptTotal = paidTotal === '' ? itemsTotal : Number(paidTotal);
+  const receiptTotalError = attempted && !(receiptTotal > 0) ? 'Ingresa el total pagado del ticket' : undefined;
   const storeError = attempted && store.trim() === '' ? 'Escribe en qué tienda compraste' : undefined;
 
   async function handlePhoto(files: File[]) {
@@ -109,14 +112,14 @@ function ScanReceiptForm({ onDone }: { onDone: () => void }) {
 
   function handleSave() {
     setAttempted(true);
-    if (store.trim() === '' || validIncluded.length === 0 || validIncluded.length !== included.length) return;
+    if (store.trim() === '' || !(receiptTotal > 0) || validIncluded.length === 0 || validIncluded.length !== included.length) return;
 
     const items = validIncluded.map((row) => ({
       name: row.name.trim(),
       quantity: Number(row.quantity),
       price: Number(row.price),
     }));
-    const receiptTotal = Math.round(items.reduce((sum, item) => sum + item.price, 0) * 100) / 100;
+    const amountPaid = Math.round(receiptTotal * 100) / 100;
     const createdAt = new Date().toISOString();
 
     updateData((previous) => {
@@ -139,7 +142,7 @@ function ScanReceiptForm({ onDone }: { onDone: () => void }) {
           ...next.expenses,
           {
             id: newId(),
-            amount: receiptTotal,
+            amount: amountPaid,
             categoryId: supermarketCategory.id,
             date,
             description: `Compra en ${store.trim()}`,
@@ -153,7 +156,7 @@ function ScanReceiptForm({ onDone }: { onDone: () => void }) {
     notifications.show({
       color: 'teal',
       title: 'Compra y gasto guardados',
-      message: `${items.length} artículos y ${formatMoney(receiptTotal, currency)} en Supermercado.`,
+      message: `${items.length} artículos y ${formatMoney(amountPaid, currency)} en Supermercado.`,
     });
     onDone();
   }
@@ -242,7 +245,20 @@ function ScanReceiptForm({ onDone }: { onDone: () => void }) {
       </Stack>
 
       <Group justify="space-between" align="center" wrap="wrap" gap="sm">
-        <Text fw={800}>Total: {formatMoney(total, currency)}</Text>
+        <Stack gap={2} style={{ minWidth: 'min(100%, 260px)' }}>
+          <Text size="xs" c="dimmed">Suma de artículos: {formatMoney(itemsTotal, currency)}</Text>
+          <NumberInput
+            label="Total pagado según el ticket"
+            value={paidTotal === '' ? itemsTotal : paidTotal}
+            onChange={setPaidTotal}
+            thousandSeparator="."
+            decimalSeparator=","
+            decimalScale={2}
+            min={0}
+            allowNegative={false}
+            error={receiptTotalError}
+          />
+        </Stack>
         <Group gap="sm">
           <Button variant="default" onClick={() => setRows(null)}>
             Otra foto

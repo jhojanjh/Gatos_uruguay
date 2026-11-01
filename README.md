@@ -29,8 +29,18 @@ La clave `anon`/publishable se incluye en el frontend, por diseño; **nunca** us
 
 ## Datos, privacidad y autenticación
 
-Los datos compartidos se guardan en la tabla Supabase `household_data`. Las fotos de facturas permanecen en IndexedDB de cada navegador y no se sincronizan entre dispositivos.
+Los datos compartidos se guardan en la fila `hogar` de Supabase. Los usuarios deben iniciar sesión con una cuenta creada desde Supabase Auth; la app no ofrece registro público.
 
-La app aún no tiene inicio de sesión. El selector de Jhojan y Luisa solo cambia el nombre de usuario que muestra la interfaz. La migración actual permite a cualquier visitante anónimo leer y actualizar el registro `hogar`; por tanto, no publiques ni cargues datos financieros reales hasta configurar Supabase Auth y políticas RLS que limiten el acceso a usuarios autorizados.
+La migración `20261101201500_secure_household_data.sql` crea `household_members` y restringe el acceso a los usuarios autenticados que figuran como miembros del hogar. Antes de activar la app protegida:
 
-El proyecto gratuito de Supabase puede pausarse después de siete días de baja actividad y permite hasta 500 MB de base de datos. Los límites de Render y Supabase pueden cambiar; consulta sus paneles antes del despliegue.
+1. Crea las dos cuentas desde Supabase Dashboard → Authentication → Users.
+2. Ejecuta la migración en Supabase SQL Editor. Esta revoca el acceso anónimo a `household_data`.
+3. Consulta los UUID de ambos usuarios en Authentication → Users e insértalos en `household_members`, con `member_id` `jhojan` o `luisa`.
+4. En Authentication → Settings, desactiva el registro público.
+5. Despliega esta versión de la app.
+
+La clave publicable de Supabase puede estar en el frontend. No incluyas nunca la clave `service_role` ni contraseñas en el código o en variables `VITE_*`.
+
+Las fotos de facturas permanecen en IndexedDB de cada navegador y no se sincronizan entre dispositivos. Los datos presupuestarios sí se comparten entre las dos cuentas autorizadas.
+
+El proyecto gratuito de Supabase puede pausarse después de siete días de baja actividad. Los límites de Render y Supabase pueden cambiar; consulta sus paneles antes del despliegue.

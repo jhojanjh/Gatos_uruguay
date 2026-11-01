@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Button, Center, Loader, Stack, Text } from '@mantine/core';
 import { AppLayout } from '@/components/AppLayout';
 import { PlaceholderScreen } from '@/components/PlaceholderScreen';
 import { UserSelector } from '@/components/UserSelector';
@@ -34,10 +35,31 @@ function renderScreen(screen: ScreenId) {
 }
 
 function AppContent() {
-  const { currentUser } = useApp();
+  const { currentUser, hasSession, authReady, authError, loadFailed, isLoadingHousehold, retryLoad } = useApp();
   const [screen, setScreen] = useState<ScreenId>('inicio');
 
-  if (!currentUser) return <UserSelector />;
+  if (!authReady) {
+    return <Center mih="100dvh"><Loader color="terracota" /></Center>;
+  }
+
+  if (!hasSession) return <UserSelector />;
+
+  if (loadFailed) {
+    return (
+      <Center mih="100dvh" p="lg">
+        <Stack align="center" gap="md" maw={360} ta="center">
+          <Text fw={700}>No pudimos cargar los datos del hogar</Text>
+          <Text>Revisa tu conexión e intenta de nuevo.</Text>
+          <Button color="terracota" onClick={retryLoad}>Reintentar</Button>
+        </Stack>
+      </Center>
+    );
+  }
+
+  if (isLoadingHousehold || !currentUser) {
+    if (authError) return <UserSelector />;
+    return <Center mih="100dvh"><Loader color="terracota" /></Center>;
+  }
 
   return (
     <AppLayout screen={screen} onScreenChange={setScreen}>

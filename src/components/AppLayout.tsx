@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { Moon, Settings, Sun, Wallet } from 'lucide-react';
-import { ActionIcon, Group, Text, ThemeIcon, UnstyledButton, useComputedColorScheme, useMantineColorScheme } from '@mantine/core';
+import { ActionIcon, Group, Text, ThemeIcon, UnstyledButton } from '@mantine/core';
 import { MemberAvatar } from '@/components/MemberAvatar';
 import { notifications } from '@mantine/notifications';
 import { MonthSwitcher } from '@/components/MonthSwitcher';
@@ -16,11 +16,9 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ screen, onScreenChange, children }: AppLayoutProps) {
-  const { currentUser, signOut } = useApp();
-  const { setColorScheme } = useMantineColorScheme();
-  const computedScheme = useComputedColorScheme('light');
+  const { currentUser, signOut, appearance, updateAppearance } = useApp();
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const isDark = computedScheme === 'dark';
+  const isDark = appearance.mode === 'dark';
 
   return (
     <div className={classes.root}>
@@ -37,7 +35,7 @@ export function AppLayout({ screen, onScreenChange, children }: AppLayoutProps) 
           <Group gap={4} wrap="nowrap">
             <ActionIcon
               aria-label={isDark ? 'Activar modo claro' : 'Activar modo oscuro'}
-              onClick={() => setColorScheme(isDark ? 'light' : 'dark')}
+              onClick={() => updateAppearance({ mode: isDark ? 'light' : 'dark' })
             >
               {isDark ? <Sun size={22} /> : <Moon size={22} />}
             </ActionIcon>
